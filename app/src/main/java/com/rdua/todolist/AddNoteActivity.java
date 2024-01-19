@@ -1,10 +1,14 @@
 package com.rdua.todolist;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.lifecycle.Observer;
+import androidx.lifecycle.ViewModelProvider;
 
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -16,12 +20,21 @@ public class AddNoteActivity extends AppCompatActivity {
     private RadioButton radioButtonLow;
     private RadioButton radioButtonMedium;
     private Button buttonSave;
-    private Database database = Database.getInstance();
+    private AddNoteViewModel viewModel;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_add_note);
+        viewModel = new ViewModelProvider(this).get(AddNoteViewModel.class);
+        viewModel.getShouldCloseScreen().observe(this, new Observer<Boolean>() {
+            @Override
+            public void onChanged(Boolean shouldClose) {
+                if (shouldClose) {
+                    finish();
+                }
+            }
+        });
         initViews();
         buttonSave.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -41,11 +54,8 @@ public class AddNoteActivity extends AppCompatActivity {
     private void saveNote(){
         String text = editTextNote.getText().toString().trim();
         int priority = getPriority();
-        int id = database.getNotes().size();
-        Note note = new Note(id, text, priority);
-        database.add(note);
-
-        finish();
+        Note note = new Note(text, priority);
+        viewModel.saveNote(note);
     }
 
     private int getPriority(){
